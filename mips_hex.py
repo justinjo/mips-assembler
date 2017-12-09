@@ -1,18 +1,58 @@
 import mips_instr
-from mips_instr import MipsISA
+from mips_instr import MipsInstr
 
 def gen_hex_instr(instructions):
-	ISA = MipsISA()
-	split_instructions = [instr.replace(',', ' ').split() for instr in instructions]
-	for instr in split_instructions:
-		if mips_instr.is_label(instr[0]):
-			print(ISA.get_instr_opcode(instr[1]) >> 2)
-		else:
-			print(ISA.get_instr_opcode(instr[0]) >> 2)
-	hex_instructions = instructions
+	labels = {}
+	curr_address = 0
+	curr_label = ''
+	mips_instructions = []
+	hex_instructions = []
+
+	for instr in instructions:
+		new_instr = MipsInstr(instr, curr_address)
+
+		# if new_instr.is_only_label():
+		# 	continue
+		
+		if new_instr.has_label():
+			labels[new_instr.get_label()] = curr_address
+
+		mips_instructions.append(new_instr)
+		curr_address += 1
+
+	for instr in mips_instructions:
+		if instr.needs_address():
+			instr.set_branch_addr(labels[instr.get_branch_label()])
+		instr.build_hex()
+		hex_instructions.append(instr.get_hex())
+
 	return hex_instructions
 
 
 def lshift(n, shift):
 	pass
 
+'''
+12110003
+01084020
+12530002
+01294820
+014a5020
+016b5820
+08000008
+02108020
+02318820
+
+12110003
+01084020
+12530002
+01294820
+014a5020
+016b5820
+08000008
+02108020
+02318820
+0x00000000
+0x00000000
+0x00000000
+'''
