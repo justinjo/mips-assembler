@@ -1,11 +1,12 @@
 import sys
 import mips_hex
 
-def open_file(file_name):
+def read_file(file_name):
 	instr_queue = []
 	file = open(file_name)
 	for line in file:
-		instr_queue.append(line)
+		if line != '':
+			instr_queue.append(line)
 	return instr_queue
 
 if __name__ == '__main__':
@@ -16,7 +17,7 @@ if __name__ == '__main__':
 		sys.exit()
 
 	file_name = sys.argv[1]
-	instructions = open_file(file_name)
+	instructions = read_file(file_name)
 	hex_instructions = mips_hex.gen_hex_instr(instructions)
 	for instr in hex_instructions:
 		print(instr)

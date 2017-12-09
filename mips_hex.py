@@ -28,10 +28,6 @@ def gen_hex_instr(instructions):
 
 	return hex_instructions
 
-
-def lshift(n, shift):
-	pass
-
 '''
 12110003
 01084020
@@ -52,7 +48,4 @@ def lshift(n, shift):
 08000008
 02108020
 02318820
-0x00000000
-0x00000000
-0x00000000
 '''
