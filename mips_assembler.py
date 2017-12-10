@@ -1,6 +1,11 @@
 import sys
 import mips_hex
 
+'''
+Supports core instruction set, labels, and some pseudoinstructions
+Does not support directives, the core arithmetic instruction set, or comments
+'''
+
 def read_file(file_name):
 	instr_queue = []
 	file = open(file_name)

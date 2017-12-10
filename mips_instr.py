@@ -1,7 +1,7 @@
 class MipsInstr:
 	'''
 	'''
-	def __init__(self, instruction, address = None):
+	def __init__(self, instruction, address):
 		self.__set_defaults__()
 		self.set_instr(instruction, address)
 
@@ -17,19 +17,22 @@ class MipsInstr:
 		self.immediate = None
 		self.jump_address = None
 
-	def set_instr(self, instruction, address = None):
+	def set_instr(self, instruction, address):
 		instr = instruction.replace(',', ' ').split()
-		# if len(instr) == 1:
-		# 	self.label = instr[0]
-		# 	self.opcode = None
-		# 	return
-		self.address = address
 
+		# if the line is just a label, return early
+		if len(instr) == 1 and instr[0] != 'nop':
+			self.label = instr[0][:-1]
+			self.opcode = None
+			return
+
+		# if the instruction has a label, use an offset to access the proper element
 		label_offset = 0
 		if is_label(instr[0]):
 			label_offset = 1
 			self.label = instr[0][:-1]
 
+		self.address = address
 		self.opcode = instr[0 + label_offset]
 		self.opval = ISA[self.opcode][OP]
 		self.format = ISA[self.opcode][FMT]
@@ -43,21 +46,53 @@ class MipsInstr:
 			else:
 				self.rs = REG[instr[2 + label_offset]]
 				self.rt = REG[instr[3 + label_offset]]
+
 		elif self.format == 'I':
-			self.rs = REG[instr[1 + label_offset]]
-			self.rt = REG[instr[2 + label_offset]]
+			self.rt = REG[instr[1 + label_offset]]
 			if self.opcode == 'sw':
-				offset, reg = instr[3 + label_offset].replace(')', '(').split('(')
-				#check if reg or label
-				#TODO: sign extend
-				self.immediate = 0
+				offset, reg, _ = instr[2 + label_offset].replace(')', '(').split('(')
+				self.rs = REG[reg]
+				self.immediate = int(offset)
 			elif self.opcode == 'beq':
+				self.rs = REG[instr[2 + label_offset]]
 				self.branch_label = instr[3 + label_offset]
 			else:
-				# TODO: sign extend
-				self.immediate = int(instr[3 + label_offset])
+				self.rs = REG[instr[2 + label_offset]]
+				self.immediate = to_decimal(instr[3 + label_offset])
+
 		elif self.format == 'J':
 			self.branch_label = instr[1 + label_offset]
+
+
+
+	def is_only_label(self):
+		return self.opcode is None
+
+	def has_label(self):
+		return self.label != ''
+
+	def set_label(self, label):
+		self.label = label
+
+	def get_label(self):
+		return self.label
+
+	def get_branch_label(self):
+		return self.branch_label
+
+	def needs_address(self):
+		if self.format == 'I':
+			return self.immediate is None
+		elif self.format == 'J':
+			return self.jump_address is None
+		return False
+
+	def set_branch_addr(self, address):
+		if self.format == 'I':
+			self.immediate = address - self.address - 1
+		elif self.format == 'J':
+			self.jump_address = address
+
 
 	def build_hex(self):
 		self.hex = self.opval << OP_SHIFT
@@ -73,38 +108,12 @@ class MipsInstr:
 			self.hex |= self.immediate
 		elif self.format == 'J':
 			self.hex |= self.jump_address
+		elif self.opcode == 'nop':
+			return 0
 
 	def get_hex(self):
 		# return hex(self.hex)
-		return '{0:#0{1}x}'.format(self.hex, 10)
-
-	def is_only_label(self):
-		return self.opcode is None
-
-	def has_label(self):
-		return self.label != ''
-
-	def set_label(self, label):
-		self.label = label[:-1]
-
-	def get_label(self):
-		return self.label
-
-	def get_branch_label(self):
-		return self.branch_label
-
-	def set_branch_addr(self, address):
-		if self.format == 'I':
-			self.immediate = address - self.address - 1
-		elif self.format == 'J':
-			self.jump_address = address
-
-	def needs_address(self):
-		if self.format == 'I':
-			return self.immediate is None
-		elif self.format == 'J':
-			return self.jump_address is None
-		return False
+		return '{0:#0{1}x}'.format(self.hex, 10)[2:]
 
 
 '''
@@ -218,6 +227,14 @@ def is_label(string):
 	if string == '':
 		return False
 	return string[-1] == ':'
+
+def to_decimal(num):
+	if len(num) > 2:
+		if num[:2] == '0x':
+			return int(num, 16)
+		elif num[0] == '0':
+			return int(num, 8)
+	return int(num)
 
 
 

@@ -5,14 +5,22 @@ def gen_hex_instr(instructions):
 	labels = {}
 	curr_address = 0
 	curr_label = ''
+	set_label = False
 	mips_instructions = []
 	hex_instructions = []
 
+	# first pass
 	for instr in instructions:
 		new_instr = MipsInstr(instr, curr_address)
 
-		# if new_instr.is_only_label():
-		# 	continue
+		if new_instr.is_only_label():
+			curr_label = new_instr.get_label()
+			set_label = True
+			continue
+
+		if set_label:
+			new_instr.set_label(curr_label)
+			set_label = False
 		
 		if new_instr.has_label():
 			labels[new_instr.get_label()] = curr_address
@@ -20,6 +28,7 @@ def gen_hex_instr(instructions):
 		mips_instructions.append(new_instr)
 		curr_address += 1
 
+	# second pass
 	for instr in mips_instructions:
 		if instr.needs_address():
 			instr.set_branch_addr(labels[instr.get_branch_label()])
