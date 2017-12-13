@@ -1,0 +1,35 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use IEEE.numeric_std.ALL; -- to_integer and unsigned
+
+entity IMEM is
+-- The instruction memory is a byte addressable, big-endian, read-only memory
+-- Reads occur continuously
+-- HINT: Use the provided dmem.vhd as a starting point
+generic(NUM_BYTES : integer := {:d});
+-- NUM_BYTES is the number of bytes in the memory (small to save computation resources)
+port(
+     Address  : in  STD_LOGIC_VECTOR(31 downto 0); -- Address to read from
+     ReadData : out STD_LOGIC_VECTOR(31 downto 0)
+);
+end IMEM;
+
+architecture Behavioral of IMEM is
+--components here
+type ByteArray is array (0 to NUM_BYTES-1) of STD_LOGIC_VECTOR(7 downto 0); 
+signal imemBytes:ByteArray := ({!s});
+signal addr : integer;
+begin
+	addr <= to_integer(unsigned(Address));
+	process(addr)
+	begin
+		if (0 <= addr and addr+3 <= NUM_BYTES) then
+			ReadData <= imemBytes(addr) & imemBytes(addr+1) &
+               imemBytes(addr+2) & imemBytes(addr+3);
+        else report "Invalid IMEM addr. Attempted to read 4-bytes starting at address " &
+            integer'image(addr) & " but only " & integer'image(NUM_BYTES+1) & " bytes are available"
+            severity error;
+        end if;
+	end process;
+
+end Behavioral;

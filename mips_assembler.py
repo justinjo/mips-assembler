@@ -15,7 +15,7 @@ def read_file(file_name):
 	return instr_queue
 
 if __name__ == '__main__':
-	print('Running ' + sys.argv[0] + '...')
+	#print('Running ' + sys.argv[0] + '...')
 	num_files = len(sys.argv) - 1
 	if num_files != 1:
 		print('Please include a text file containing the mips program')
